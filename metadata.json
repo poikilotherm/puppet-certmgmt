@@ -1,0 +1,15 @@
+{
+  "name": "poikilotherm/certmgmt",
+  "version": "0.1.0",
+  "author": "Oliver Bertuch",
+  "summary": "A puppet module to manage pregenerated ssl certificates and keys.",
+  "license": "Apache-2.0",
+  "source": "https://github.com/poikilotherm/puppet-certmgmt",
+  "project_page": "https://github.com/poikilotherm/puppet-certmgmt",
+  "issues_url": "https://github.com/poikilotherm/puppet-certmgmt/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ],
+  "data_provider": null
+}
+
