@@ -1,0 +1,30 @@
+1) kein cert => fehler
+2) ensure => alle werte ausser present/absent nicht erlaubt
+3) key => nur strings oder undef, keine arrays/hashes
+4) chain => wenn array, array von strings. oder string oder undef
+5) onefile => boolean, sonst fehler
+6) certfile => alles ausser absoluter pfad = fehler
+7) keyfile => wie certpath
+8) owner => nur string
+9) group => nur string
+10) mode => nur zahlen
+
+11) keyfile korrektes cert?
+12) cert korrectes cert?
+13) chain ok?
+14) sollte nicht cert = chain akzeptieren
+
+A) sollte eine datei enthalten mit dem cert
+B) sollte wenn onefile = false eine datei enthalten mit dem key
+	B.A) chain = undef, content = cert
+	B.B) chain, content = cert\nchain
+C) onefile = true
+	C.A) wenn key=undef und chain=undef, content=cert
+	C.B) wenn key=undef und chain, content=cert\nchain
+	C.C) wenn key und chain=undef, content=key\ncert
+	C.D) wenn key und chain, content=key\ncert\nchain
+G) 
+
+
+FRAGEN
+was ist mit encrypted keys? -> passwort als parameter? -> override des checks?

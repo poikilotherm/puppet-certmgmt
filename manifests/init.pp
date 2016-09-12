@@ -42,7 +42,11 @@
 #
 # Copyright 2016 Your name here, unless otherwise noted.
 #
-class certmgmt {
-
-
+class certmgmt (
+  $certs    = {},
+  $defaults = {},
+  $certpath = $certmngt::params::certpath,
+  $keypath  = $certmngt::params::keypath,
+) inherits certmgmt::params {
+  create_resources('certmgmt::cert', $certs, $defaults)
 }
