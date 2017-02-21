@@ -63,21 +63,20 @@ define certmgmt::cert (
 
   ### VALIDATE CERTIFICATES
   if $x509 and $ensure == 'present' {
-    exec { "cert: test ${title} certificate":
+    exec { "cert: test ${title} certificate is valid PEM cert":
       command => "echo '${x509}' | openssl x509 -inform PEM -noout",
       tag     => 'cert::testtag',
     }
   }
   # chain might be multiple certs!
-  if $_chain and $ensure == 'present' {
-    exec { "cert: test ${title} chain":
-      command => "echo '${_chain}' | openssl verify",
+  if $chain and $ensure == 'present' {
+    exec { "cert: verify cert ${title} with chain":
+      command => "echo '${x509}${_chain}' | tee /tmp/${title}.chain.pem | openssl verify -CAfile /tmp/${title}.chain.pem;",
       tag     => 'cert::testtag',
     }
   }
-  #if $key and $ensure == 'present' {
-    #validate_x509_rsa_key_pair($x509, $key)
-  #}
+  # TODO: maybe check if the cert matches the priv key?
+  # that means comparing the moduli in each file... maybe custom function?
 
   ### OUTPUT
   # if only a combined file should be generated, put the private key first
@@ -88,7 +87,7 @@ define certmgmt::cert (
   }
   # if there is a chain present, append it to the cert
   if $chain != undef {
-    $_cert = "${_onefile}${chain}"
+    $_cert = "${_onefile}${_chain}"
   } else {
     $_cert = $_onefile
   }
