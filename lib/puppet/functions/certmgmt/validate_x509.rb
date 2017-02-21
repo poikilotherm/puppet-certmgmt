@@ -12,9 +12,9 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
   # @param x509 The PEM formatted X509 certificate
   # @param x509ca The PEM formatted X509 CA certificate
   # @return [Boolean] Returns true when verified successfully, raises exception when not
-  dispatch :validate do
-    param 'String[1]' :x509
-    param 'String[1]' :x509ca
+  dispatch :validateca do
+    param 'String[1]', :x509
+    param 'String[1]', :x509ca
     return_type 'Boolean'
   end
 
@@ -23,9 +23,9 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
   # @param x509 The PEM formatted X509 certificate
   # @param x509ca Array of PEM formatted X509 CA certificates ("the chain")
   # @return [Boolean] Returns true when verified successfully, raises exception when not
-  dispatch :validate do
-    param 'String[1]' :x509
-    param 'Array[String[1]]' :x509cachain
+  dispatch :validatecahash do
+    param 'String[1]', :x509
+    param 'Hash[String[1],String[1],1]', :x509cachain
     return_type 'Boolean'
   end
 
@@ -39,7 +39,7 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
     end
   end
 
-  def validate(x509, x509ca)
+  def validateca(x509, x509ca)
     require 'openssl'
     begin
       cert = OpenSSL::X509::Certificate.new(x509)
@@ -56,22 +56,22 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
     end
   end
 
-  def validate(x509, x509cachain)
+  def validatecahash(x509, x509cachain)
     require 'openssl'
     begin
       cert = OpenSSL::X509::Certificate.new(x509)
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 certificate: #{e}"
     end
-    x509cachain.each_with_index { |x509ca, i|
+    x509cachain.each { |ca, x509ca|
       begin
         cacert = OpenSSL::X509::Certificate.new(x509ca)
       rescue OpenSSL::X509::CertificateError => e
-        raise Puppet::ParseError, "Not a valid x509 CA certificate: #{e}"
+        raise Puppet::ParseError, "Not a valid x509 CA certificate for #{ca}: #{e}"
       end
       # verify every level of the chain
       if ! cert.verify(cacert.public_key)
-        raise Puppet::ParseError, "Certificate was not signed by given CA at depth #{i}: #{e}"
+        raise Puppet::ParseError, "Certificate was not signed by given CA #{ca}: #{e}"
       end
       # for the next iteration set the current CA cert
       # to cert as the next level needs always to be verified

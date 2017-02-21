@@ -38,10 +38,14 @@ define certmgmt::cert (
   Optional[Certmgmt::KeyPem] $key = undef,
   Optional[Variant[
       Certmgmt::X509PEM,
-      Array[Certmgmt::X509PEM,1]
+      Hash[String[1],Certmgmt::X509PEM,1]
     ]] $chain = undef,
-  Optional[Boolean] $combined = false,
+  Optional[Variant[
+      Boolean,
+      Enum['key+cert','cert+chain']
+    ]] $combined = false,
   Optional[String[1]] $file = "${certmgmt::certpath}/${title}.pem",
+  Optional[String[1]] $chainfile = "${certmgmt::certpath}/${title}.chain.pem",
   Optional[String[1]] $keyfile = "${certmgmt::keypath}/${title}.key.pem",
   Optional[String[1]] $owner = 'root',
   Optional[String[1]] $group = 'root',
@@ -54,14 +58,8 @@ define certmgmt::cert (
   } else {
     $_ensure = $ensure
   }
-  # if the user sends us a multiple certs as a chain in an array structure,
-  # join the stuff by using link breaks
-  if $chain.is_a(Array)  {
-    $_chain = join($chain, '\n')
-  } else {
-    $_chain = $chain
-  }
   validate_absolute_path($file)
+  validate_absolute_path($chainfile)
   validate_absolute_path($keyfile)
 
   ### VALIDATE CERTIFICATES
@@ -70,27 +68,33 @@ define certmgmt::cert (
   }
   # chain might be multiple certs!
   if $chain and $ensure == 'present' {
-    if $chain.is_a(Array) {
-      $chain.each |$chaincert| {
-        certmgmt::validate_x509($chaincert)
-      }
-    } else {
-      certmgmt::validate_x509($chain)
-    }
+    certmgmt::validate_x509($x509, $chain)
   }
   # TODO: maybe check if the cert matches the priv key?
   # that means comparing the moduli in each file... maybe custom function?
 
   ### OUTPUT
-  # if only a combined file should be generated, put the private key first
-  if $combined {
+  # if a combined file should be generated, put the private key first
+  if $combined == true or $combined == 'key+cert' {
     $_onefile = "${key}${x509}"
+    $diff = false
   } else {
     $_onefile = $x509
+    $diff = true
+  }
+
+  # if the user sends us a multiple certs as a chain in a hash structure,
+  # join the stuff by using link breaks
+  if $chain.is_a(Hash)  {
+    $_chain = join(values($chain))
+  } else {
+    $_chain = $chain
   }
   # if there is a chain present, append it to the cert
-  if $chain != undef {
+  if $chain and $combined == true {
     $_cert = "${_onefile}${_chain}"
+  } elsif $chain and $combined == 'cert+chain' {
+    $_cert = "${x509}${_chain}"
   } else {
     $_cert = $_onefile
   }
@@ -101,11 +105,11 @@ define certmgmt::cert (
     mode      => $mode,
     owner     => $owner,
     group     => $group,
-    show_diff => !$combined, # if combined is true, do not show diffs to protect the private key!
+    show_diff => $diff,
   }
 
   # if the user did not want a single (combined) file, write the private key
-  if ! $combined {
+  if $combined == false or $combined == 'cert+chain' or $ensure == 'absent' {
     file { $keyfile:
       ensure    => $_ensure,
       content   => $key,
@@ -113,6 +117,26 @@ define certmgmt::cert (
       owner     => $owner,
       group     => $group,
       show_diff => false,
+    }
+  } elsif $ensure == 'absent' {
+    file { $keyfile:
+      ensure    => $_ensure,
+      show_diff => false,
+    }
+  }
+
+  # if the chainfile should be separate, do so...
+  if $combined == false or $combined == 'key+cert' {
+    file { $chainfile:
+      ensure  => $_ensure,
+      content => $_chain,
+      mode    => '0600',
+      owner   => $owner,
+      group   => $group,
+    }
+  } elsif $ensure == 'absent' {
+    file { $chainfile:
+      ensure => $_ensure,
     }
   }
 }
