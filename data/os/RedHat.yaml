@@ -1,0 +1,3 @@
+---
+certmgmt::certpath: /etc/pki/tls/certs
+certmgmt::keypath: /etc/pki/tls/private

@@ -1,7 +1,7 @@
-# Type: certmgmt::cert
+# Type: certmgmt::keypair
 # ===========================
 #
-# The defined type `certmgmt::cert` enrolls a certificate from the given
+# The defined type `certmgmt::keypair` enrolls a certificate from the given
 # parameters. You may include a certificate chain within the certificate file.
 # A private key can be enrolled, too, either within the file or as a seperate file.
 #
@@ -25,54 +25,46 @@
 # Authors
 # -------
 #
-# Oliver Bertuch <oliver@bertuch.eu> 
+# Oliver Bertuch <oliver@bertuch.eu>
 #
 # Copyright
 # ---------
 #
-# Copyright 2016 Oliver Bertuch 
+# Copyright 2016 Oliver Bertuch
 #
 define certmgmt::cert (
-  $cert,
-  $ensure   = 'present',
-  $key      = undef,
-  $chain    = undef,
-  $onefile  = false,
-  $certfile = "${::certmgmt::certpath}/${title}.pem",
-  $keyfile  = "${::certmgmt::keypath}/${title}.key.pem",
-  $owner    = $::certmgmt::owner,
-  $group    = $::certmgmt::group,
-  $mode     = $::certmgmt::mode,
+  NotUndef[String[1]] $x509,
+  Optional[Enum['present','absent']] $ensure = 'present',
+  Optional[String[1]] $key = undef,
+  Optional[Variant[String[1],Array[String[1],1]]] $chain = undef,
+  Optional[Boolean] $combined = false,
+  Optional[String[1]] $file = "${certmgmt::certpath}/${title}.pem",
+  Optional[String[1]] $keyfile = "${certmgmt::keypath}/${title}.key.pem",
+  Optional[String[1]] $owner = 'root',
+  Optional[String[1]] $group = 'root',
+  Optional[Pattern[/\A0[0-7]{3}\Z/]] $mode = '0600',
 ) {
-  include ::certmgmt::params
 
   ### PARAMETER VALIDATION + NORMALISATION
-  validate_string($cert)
-  validate_re($ensure, ['absent','present'])
   if $ensure == 'present' {
     $_ensure = 'file'
   } else {
     $_ensure = $ensure
   }
-  validate_string($key)
-
   # if the user sends us a multiple certs as a chain in an array structure,
   # join the stuff by using link breaks
-  if is_array($chain) {
+  if $chain.is_a(Array[String])  {
     $_chain = join($chain, '\n')
-    validate_string($_chain)
   } else {
-    validate_string($chain)
     $_chain = $chain
   }
-  validate_boolean($onefile)
-  validate_absolute_path($certfile)
+  validate_absolute_path($file)
   validate_absolute_path($keyfile)
 
   ### VALIDATE CERTIFICATES
-  if $cert and $ensure == 'present' {
+  if $x509 and $ensure == 'present' {
     exec { "cert: test ${title} certificate":
-      command => "echo '${cert}' | openssl x509 -inform PEM -noout",
+      command => "echo '${x509}' | openssl x509 -inform PEM -noout",
       tag     => 'cert::testtag',
     }
   }
@@ -83,20 +75,16 @@ define certmgmt::cert (
       tag     => 'cert::testtag',
     }
   }
-  # TODO: what about DSA keys?
-  if $key and $ensure == 'present' {
-    exec { "cert: test ${title} key":
-      command => "echo '${key}' | openssl rsa -inform PEM -noout",
-      tag     => 'cert::testtag',
-    }
-  }
+  #if $key and $ensure == 'present' {
+    #validate_x509_rsa_key_pair($x509, $key)
+  #}
 
   ### OUTPUT
   # if only a combined file should be generated, put the private key first
-  if $onefile {
-    $_onefile = "${key}${cert}"
+  if $combined {
+    $_onefile = "${key}${x509}"
   } else {
-    $_onefile = $cert
+    $_onefile = $x509
   }
   # if there is a chain present, append it to the cert
   if $chain != undef {
@@ -105,17 +93,17 @@ define certmgmt::cert (
     $_cert = $_onefile
   }
 
-  file { $certfile:
+  file { $file:
     ensure    => $_ensure,
     content   => $_cert,
     mode      => $mode,
     owner     => $owner,
     group     => $group,
-    show_diff => !$onefile, # if onefile is true, do not show diffs to protect the private key!
+    show_diff => !$combined, # if combined is true, do not show diffs to protect the private key!
   }
 
   # if the user did not want a single (combined) file, write the private key
-  if ! $onefile {
+  if ! $combined {
     file { $keyfile:
       ensure    => $_ensure,
       content   => $key,
@@ -125,11 +113,4 @@ define certmgmt::cert (
       show_diff => false,
     }
   }
-
-  ### ORDERING
-  anchor { "cert::${title}::start": } ->
-  Exec<| tag == 'cert::testtag' |> ->
-  File[$_certfile] ->
-  File[$_keyfile] ->
-  anchor { "cert::${title}::end": }
 }

@@ -43,10 +43,17 @@
 # Copyright 2016 Your name here, unless otherwise noted.
 #
 class certmgmt (
-  $certs    = {},
-  $defaults = {},
-  $certpath = $certmngt::params::certpath,
-  $keypath  = $certmngt::params::keypath,
-) inherits certmgmt::params {
-  create_resources('certmgmt::cert', $certs, $defaults)
+  Optional[Hash[String[1], Certmgmt::Certificate]] $certs = {},
+  Optional[Certmgmt::CertDefault] $defaults = {},
+  Optional[String[1]] $certpath,
+  Optional[String[1]] $keypath,
+) {
+  validate_absolute_path($certpath)
+  validate_absolute_path($keypath)
+
+  $certs.each |$cert, $options| {
+    certmgmt::cert { $cert:
+      * => $options + $defaults,
+    }
+  }
 }
