@@ -33,10 +33,13 @@
 # Copyright 2016 Oliver Bertuch
 #
 define certmgmt::cert (
-  NotUndef[String[1]] $x509,
+  NotUndef[Certmgmt::X509PEM] $x509,
   Optional[Enum['present','absent']] $ensure = 'present',
-  Optional[String[1]] $key = undef,
-  Optional[Variant[String[1],Array[String[1],1]]] $chain = undef,
+  Optional[Certmgmt::KeyPem] $key = undef,
+  Optional[Variant[
+      Certmgmt::X509PEM,
+      Array[Certmgmt::X509PEM,1]
+    ]] $chain = undef,
   Optional[Boolean] $combined = false,
   Optional[String[1]] $file = "${certmgmt::certpath}/${title}.pem",
   Optional[String[1]] $keyfile = "${certmgmt::keypath}/${title}.key.pem",
@@ -53,7 +56,7 @@ define certmgmt::cert (
   }
   # if the user sends us a multiple certs as a chain in an array structure,
   # join the stuff by using link breaks
-  if $chain.is_a(Array[String])  {
+  if $chain.is_a(Array)  {
     $_chain = join($chain, '\n')
   } else {
     $_chain = $chain
@@ -63,16 +66,16 @@ define certmgmt::cert (
 
   ### VALIDATE CERTIFICATES
   if $x509 and $ensure == 'present' {
-    exec { "cert: test ${title} certificate is valid PEM cert":
-      command => "echo '${x509}' | openssl x509 -inform PEM -noout",
-      tag     => 'cert::testtag',
-    }
+    certmgmt::validate_x509($x509)
   }
   # chain might be multiple certs!
   if $chain and $ensure == 'present' {
-    exec { "cert: verify cert ${title} with chain":
-      command => "echo '${x509}${_chain}' | tee /tmp/${title}.chain.pem | openssl verify -CAfile /tmp/${title}.chain.pem;",
-      tag     => 'cert::testtag',
+    if $chain.is_a(Array) {
+      $chain.each |$chaincert| {
+        certmgmt::validate_x509($chaincert)
+      }
+    } else {
+      certmgmt::validate_x509($chain)
     }
   }
   # TODO: maybe check if the cert matches the priv key?
