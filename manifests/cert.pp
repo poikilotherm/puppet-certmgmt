@@ -70,8 +70,9 @@ define certmgmt::cert (
   if $chain and $ensure == 'present' {
     certmgmt::validate_x509($x509, $chain)
   }
-  # TODO: maybe check if the cert matches the priv key?
-  # that means comparing the moduli in each file... maybe custom function?
+  if $key and $ensure == 'present' {
+    certmgmt::validate_keypair($x509, $key)
+  }
 
   ### OUTPUT
   # if a combined file should be generated, put the private key first
