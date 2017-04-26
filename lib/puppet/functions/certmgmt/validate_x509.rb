@@ -54,6 +54,7 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
     if ! cert.verify(cacert.public_key)
       raise Puppet::ParseError, "Certificate was not signed by given CA: #{e}"
     end
+    true
   end
 
   def validatecahash(x509, x509cachain)
