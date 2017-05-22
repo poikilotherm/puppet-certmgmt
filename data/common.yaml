@@ -1,4 +1,5 @@
 ---
+certmgmt::certs: {}
 certmgmt::defaults:
   owner: root
   group: root

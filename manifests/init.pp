@@ -43,8 +43,8 @@
 # Copyright 2016 Your name here, unless otherwise noted.
 #
 class certmgmt (
-  Optional[Hash[String[1], Certmgmt::Certificate]] $certs = {},
-  Optional[Certmgmt::CertDefault] $defaults = {},
+  Optional[Hash[String[1], Certmgmt::Certificate]] $certs,
+  Optional[Certmgmt::CertDefault] $defaults,
   Optional[String[1]] $certpath,
   Optional[String[1]] $keypath,
 ) {
