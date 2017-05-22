@@ -32,5 +32,6 @@ branches:
   only:
   - master
   - /^v\d/
+  - development
 notifications:
 email: false
