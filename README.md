@@ -1,5 +1,8 @@
 # certmgmt
 
+Master: [![Master Build Status](https://travis-ci.org/poikilotherm/puppet-certmgmt.svg?branch=master)](https://travis-ci.org/poikilotherm/puppet-certmgmt)
+Dev: [![Development Build Status](https://travis-ci.org/poikilotherm/puppet-certmgmt.svg?branch=development)](https://travis-ci.org/poikilotherm/puppet-certmgmt)
+
 #### Table of Contents
 
 1. [Description](#description)
