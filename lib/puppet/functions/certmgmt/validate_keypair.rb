@@ -15,19 +15,17 @@ Puppet::Functions.create_function(:'certmgmt::validate_keypair') do
     require 'openssl'
     begin
       cert = OpenSSL::X509::Certificate.new(x509)
+      key = OpenSSL::PKey.read(key)
+
+      unless cert.check_private_key(key)
+        raise Puppet::ParseError, "Private key for \"#{title}\" does not match certificate."
+      end
+
       true
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 certificate for \"#{title}\": #{e}"
-    end
-    begin
-      key = OpenSSL::PKey.read(key)
     rescue ArgumentError => e
       raise Puppet::ParseError, "Not a valid private key for \"#{title}\": #{e}"
     end
-
-    unless cert.check_private_key(key)
-      raise Puppet::ParseError, "Private key for \"#{title}\" does not match certificate."
-    end
-    true
   end
 end
