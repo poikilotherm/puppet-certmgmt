@@ -10,4 +10,8 @@ RSpec.configure do |c|
   # default_facts.merge!(YAML.load(File.read(File.expand_path('../default_facts.yaml', __FILE__)))) if File.exist?(File.expand_path('../default_facts.yaml', __FILE__))
   # default_facts.merge!(YAML.load(File.read(File.expand_path('../default_module_facts.yaml', __FILE__)))) if File.exist?(File.expand_path('../default_module_facts.yaml', __FILE__))
   c.default_facts = default_facts
+
+  c.after(:suite) do
+    RSpec::Puppet::Coverage.report!
+  end
 end
