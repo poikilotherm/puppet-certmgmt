@@ -32,7 +32,7 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
   def validate(x509)
     require 'openssl'
     begin
-      cert = OpenSSL::X509::Certificate.new(x509)
+      OpenSSL::X509::Certificate.new(x509)
       true
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 certificate: #{e}"
@@ -51,7 +51,7 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 CA certificate: #{e}"
     end
-    if ! cert.verify(cacert.public_key)
+    unless cert.verify(cacert.public_key)
       raise Puppet::ParseError, "Certificate was not signed by given CA: #{e}"
     end
     true
@@ -64,21 +64,21 @@ Puppet::Functions.create_function(:'certmgmt::validate_x509') do
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 certificate: #{e}"
     end
-    x509cachain.each { |ca, x509ca|
+    x509cachain.each do |ca, x509ca|
       begin
         cacert = OpenSSL::X509::Certificate.new(x509ca)
       rescue OpenSSL::X509::CertificateError => e
         raise Puppet::ParseError, "Not a valid x509 CA certificate for #{ca}: #{e}"
       end
       # verify every level of the chain
-      if ! cert.verify(cacert.public_key)
+      unless cert.verify(cacert.public_key)
         raise Puppet::ParseError, "Certificate was not signed by given CA #{ca}: #{e}"
       end
       # for the next iteration set the current CA cert
       # to cert as the next level needs always to be verified
       # by the last
       cert = cacert
-    }
+    end
     true
   end
 end
