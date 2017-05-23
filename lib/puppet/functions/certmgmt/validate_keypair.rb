@@ -24,7 +24,9 @@ Puppet::Functions.create_function(:'certmgmt::validate_keypair') do
       true
     rescue OpenSSL::X509::CertificateError => e
       raise Puppet::ParseError, "Not a valid x509 certificate for \"#{title}\": #{e}"
-    rescue OpenSSL::PKey::PKeyError => e
+    rescue ArgumentError => e # ruby < 2.4
+      raise Puppet::ParseError, "Not a valid private key for \"#{title}\": #{e}"
+    rescue OpenSSL::PKey::PKeyError => e # ruby >= 2.4
       raise Puppet::ParseError, "Not a valid private key for \"#{title}\": #{e}"
     end
   end
