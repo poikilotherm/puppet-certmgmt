@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Certmgmt::Certificate', :if => Puppet::Util::Package.versioncmp(Puppet.version, '4.4.0') >= 0 do
+describe 'Certmgmt::Certificate', if: Puppet::Util::Package.versioncmp(Puppet.version, '4.4.0') >= 0 do
   chain = {
     'root' => IO.read('spec/fixtures/files/chained_ca/root/root.pem'),
     'inter' => IO.read('spec/fixtures/files/chained_ca/inter/inter.pem')
@@ -8,9 +8,7 @@ describe 'Certmgmt::Certificate', :if => Puppet::Util::Package.versioncmp(Puppet
   servercert = IO.read('spec/fixtures/files/chained_ca/server.pem')
   serverkey = IO.read('spec/fixtures/files/chained_ca/server.key')
 
-  only_cert = {
-    'x509' => servercert,
-  }
+  only_cert = { 'x509' => servercert }
   it { is_expected.to allow_value(only_cert) }
 
   cert_and_key = {
@@ -20,9 +18,9 @@ describe 'Certmgmt::Certificate', :if => Puppet::Util::Package.versioncmp(Puppet
   it { is_expected.to allow_value(cert_and_key) }
 
   cert_key_ca = {
-      'x509' => servercert,
-      'key' => serverkey,
-      'chain' => chain['root']
+    'x509' => servercert,
+    'key' => serverkey,
+    'chain' => chain['root']
   }
   it { is_expected.to allow_value(cert_key_ca) }
 
