@@ -7,14 +7,14 @@ describe 'certmgmt' do
         facts
       end
 
-      context "without parameters" do
+      context 'without parameters' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('certmgmt') }
       end
 
-      context "with certs in parameters" do
+      context 'with certs in parameters' do
         # load certificats to be used later on
-        certs = { 'long' => {}, 'short' => {}}
+        certs = { 'long' => {}, 'short' => {} }
         # cert with a long chain (more than 1: root + intermediate)
         certs['long']['chain'] = {
           'inter' => IO.read('spec/fixtures/files/chained_ca/inter/inter.pem'),
@@ -32,21 +32,16 @@ describe 'certmgmt' do
           context "with #{type} chain of ca certs" do
             let(:params) do
               {
-                :certs => {'test' => data}
+                certs: { 'test' => data }
               }
             end
 
             it { is_expected.to compile.with_all_deps }
             it { is_expected.to contain_class('certmgmt') }
-            it { is_expected.to contain_certmgmt__cert('test')}
+            it { is_expected.to contain_certmgmt__cert('test') }
           end
         end
       end
-      #case facts[:osfamily]
-      #when 'RedHat'
-        #it { is_expected.to contain_package('xyz') }
-        #...
-      #end
     end
   end
 end
