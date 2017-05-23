@@ -71,7 +71,7 @@ define certmgmt::cert (
     certmgmt::validate_x509($x509, $chain)
   }
   if $key and $ensure == 'present' {
-    certmgmt::validate_keypair($x509, $key)
+    certmgmt::validate_keypair($name, $x509, $key)
   }
 
   ### OUTPUT
