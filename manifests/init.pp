@@ -53,7 +53,7 @@ class certmgmt (
 
   $certs.each |$cert, $options| {
     certmgmt::cert { $cert:
-      * => $options + $defaults,
+      * => $defaults + $options,
     }
   }
 }

@@ -41,6 +41,21 @@ describe 'certmgmt' do
             it { is_expected.to contain_certmgmt__cert('test') }
           end
         end
+
+        context 'with owner set' do
+          let(:params) do
+            {
+              certs: { 'test' => {
+                x509: certs['long']['x509'],
+                owner: 'apache',
+                file: '/etc/pki/tls/private/test.pem'
+              } }
+            }
+          end
+
+          it { is_expected.to contain_certmgmt__cert('test').with_owner('apache') }
+          it { is_expected.to contain_file('/etc/pki/tls/private/test.pem').with_owner('apache') }
+        end
       end
     end
   end

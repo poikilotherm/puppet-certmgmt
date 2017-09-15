@@ -62,6 +62,18 @@ describe 'certmgmt::cert' do
 
               it { is_expected.to contain_file('/etc/pki/tls/server.pem') }
               it { is_expected.to contain_file('/etc/pki/tls/server.pem').with_content(content) }
+
+              context 'with owner set' do
+                let(:params) do
+                  data.merge(
+                    combined: combo,
+                    file: '/etc/pki/tls/server.pem',
+                    owner: 'apache'
+                  )
+                end
+
+                it { is_expected.to contain_file('/etc/pki/tls/server.pem').with_owner('apache') }
+              end
             end
           end
         end
